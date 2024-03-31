@@ -49,13 +49,23 @@ impl Action {
         }
     }
 
+    fn jump_first(&self, curr: &mut usize) {
+        if *curr > 0 {
+            *curr = 0;
+        }
+    }
+
+    fn jump_last(&self, list: usize, curr: &mut usize) {
+        if *curr + 1 < list {
+            *curr = list - 1;
+        }
+    }
+
     fn transfer(&self, dst: &mut Vec<String>, src: &mut Vec<String>, curr: &mut usize) {
-        if !src.is_empty() {
-            if *curr < src.len() {
-                dst.push(src.remove(*curr));
-                if *curr >= src.len() {
-                    self.go(Direction::Up, src.len(), curr);
-                }
+        if !src.is_empty() && *curr < src.len() {
+            dst.push(src.remove(*curr));
+            if *curr >= src.len() {
+                self.go(Direction::Up, src.len(), curr);
             }
         }
     }
@@ -174,6 +184,10 @@ fn main() {
                 (_, '\t') => status = status.toggle(),
                 (Status::Todo, 'j') => action.go(Direction::Down, todos.len(), &mut todo_curr),
                 (Status::Done, 'j') => action.go(Direction::Down, dones.len(), &mut done_curr),
+                (Status::Todo, 'g') => action.jump_first(&mut todo_curr),
+                (Status::Done, 'g') => action.jump_first(&mut done_curr),
+                (Status::Todo, 'G') => action.jump_last(todos.len(), &mut todo_curr),
+                (Status::Done, 'G') => action.jump_last(dones.len(), &mut done_curr),
                 (Status::Todo, 'k') => action.go(Direction::Up, todos.len(), &mut todo_curr),
                 (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
                 (Status::Todo, 'x') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
