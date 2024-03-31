@@ -61,6 +61,15 @@ impl Action {
         }
     }
 
+    fn delete(&self, src: &mut Vec<String>, curr: &mut usize) {
+        if *curr < src.len() {
+            src.remove(*curr);
+            if *curr >= src.len() {
+                self.go(Direction::Up, src.len(), curr);
+            }
+        }
+    }
+
     fn transfer(&self, dst: &mut Vec<String>, src: &mut Vec<String>, curr: &mut usize) {
         if !src.is_empty() && *curr < src.len() {
             dst.push(src.remove(*curr));
@@ -192,6 +201,7 @@ fn main() {
                 (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
                 (Status::Todo, 'x') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
                 (Status::Done, 'x') => action.transfer(&mut todos, &mut dones, &mut done_curr),
+                (Status::Done, 'd') => action.delete(&mut dones, &mut done_curr),
                 (_, _) => {}
             }
         }
