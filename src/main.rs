@@ -24,6 +24,8 @@ impl Status {
 enum Direction {
     Up,
     Down,
+    First,
+    Last,
 }
 
 #[derive(Default)]
@@ -37,6 +39,11 @@ impl Action {
                     *index = (*index + 1) % size;
                 }
             }
+            Direction::Last => {
+                if *index + 1 < size {
+                    *index = size - 1;
+                }
+            }
             Direction::Up => {
                 if size > 0 {
                     if *index > 0 {
@@ -46,18 +53,11 @@ impl Action {
                     }
                 }
             }
-        }
-    }
-
-    fn jump_first(&self, curr: &mut usize) {
-        if *curr > 0 {
-            *curr = 0;
-        }
-    }
-
-    fn jump_last(&self, list: usize, curr: &mut usize) {
-        if *curr + 1 < list {
-            *curr = list - 1;
+            Direction::First => {
+                if *index > 0 {
+                    *index = 0;
+                }
+            }
         }
     }
 
@@ -84,6 +84,7 @@ impl Action {
                     *curr -= 1;
                 }
             }
+            _ => {}
         }
     }
 
@@ -212,10 +213,10 @@ fn main() {
                 (Status::Done, 'j') => action.go(Direction::Down, dones.len(), &mut done_curr),
                 (Status::Todo, 'J') => action.drag(Direction::Down, &mut todos, &mut todo_curr),
                 (Status::Done, 'J') => action.drag(Direction::Down, &mut dones, &mut done_curr),
-                (Status::Todo, 'g') => action.jump_first(&mut todo_curr),
-                (Status::Done, 'g') => action.jump_first(&mut done_curr),
-                (Status::Todo, 'G') => action.jump_last(todos.len(), &mut todo_curr),
-                (Status::Done, 'G') => action.jump_last(dones.len(), &mut done_curr),
+                (Status::Todo, 'g') => action.go(Direction::First, todos.len(), &mut todo_curr),
+                (Status::Done, 'g') => action.go(Direction::First, dones.len(), &mut done_curr),
+                (Status::Todo, 'G') => action.go(Direction::Last, todos.len(), &mut todo_curr),
+                (Status::Done, 'G') => action.go(Direction::Last, dones.len(), &mut done_curr),
                 (Status::Todo, 'k') => action.go(Direction::Up, todos.len(), &mut todo_curr),
                 (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
                 (Status::Todo, 'K') => action.drag(Direction::Up, &mut todos, &mut todo_curr),
