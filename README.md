@@ -20,7 +20,7 @@ $ cargo run
 |<kbd>d</kbd>| Deletes item in DONE list |
 |<kbd>G</kbd>| Goes last item in active list|
 |<kbd>k</kbd>| Goes one item up in active list|
-|<kbd>x</kbd>| Performs transfer from active to other list|
+|<kbd>ENTER</kbd>| Performs transfer from active to other list|
 
 ## References
 - TBD

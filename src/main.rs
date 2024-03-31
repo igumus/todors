@@ -199,8 +199,8 @@ fn main() {
                 (Status::Done, 'G') => action.jump_last(dones.len(), &mut done_curr),
                 (Status::Todo, 'k') => action.go(Direction::Up, todos.len(), &mut todo_curr),
                 (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
-                (Status::Todo, 'x') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
-                (Status::Done, 'x') => action.transfer(&mut todos, &mut dones, &mut done_curr),
+                (Status::Todo, '\n') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
+                (Status::Done, '\n') => action.transfer(&mut todos, &mut dones, &mut done_curr),
                 (Status::Done, 'd') => action.delete(&mut dones, &mut done_curr),
                 (_, _) => {}
             }
