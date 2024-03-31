@@ -1,5 +1,5 @@
 # todors
-Simple VIM-like terminal Todo App in Rust.
+Simple VIM-like terminal Todo App in [Rust](https://www.rust-lang.org/).
 
 ## Pre-Requisite
 
@@ -23,6 +23,12 @@ $ cargo run
 |<kbd>k</kbd>| Goes one item up in active list|
 |<kbd>K</kbd>| Drag item up in active list|
 |<kbd>ENTER</kbd>| Performs transfer from active to other list|
+
+## Purposes
+
+- Exercize with Rust 
+- Experiment with Immediate UI (especially TUI) idea.
+
 
 ## References
 - TBD
