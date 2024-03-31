@@ -70,6 +70,23 @@ impl Action {
         }
     }
 
+    fn drag(&self, dir: Direction, src: &mut [String], curr: &mut usize) {
+        match dir {
+            Direction::Down => {
+                if *curr + 1 < src.len() {
+                    src.swap(*curr, *curr + 1);
+                    *curr += 1;
+                }
+            }
+            Direction::Up => {
+                if *curr > 0 {
+                    src.swap(*curr, *curr - 1);
+                    *curr -= 1;
+                }
+            }
+        }
+    }
+
     fn transfer(&self, dst: &mut Vec<String>, src: &mut Vec<String>, curr: &mut usize) {
         if !src.is_empty() && *curr < src.len() {
             dst.push(src.remove(*curr));
@@ -193,12 +210,16 @@ fn main() {
                 (_, '\t') => status = status.toggle(),
                 (Status::Todo, 'j') => action.go(Direction::Down, todos.len(), &mut todo_curr),
                 (Status::Done, 'j') => action.go(Direction::Down, dones.len(), &mut done_curr),
+                (Status::Todo, 'J') => action.drag(Direction::Down, &mut todos, &mut todo_curr),
+                (Status::Done, 'J') => action.drag(Direction::Down, &mut dones, &mut done_curr),
                 (Status::Todo, 'g') => action.jump_first(&mut todo_curr),
                 (Status::Done, 'g') => action.jump_first(&mut done_curr),
                 (Status::Todo, 'G') => action.jump_last(todos.len(), &mut todo_curr),
                 (Status::Done, 'G') => action.jump_last(dones.len(), &mut done_curr),
                 (Status::Todo, 'k') => action.go(Direction::Up, todos.len(), &mut todo_curr),
                 (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
+                (Status::Todo, 'K') => action.drag(Direction::Up, &mut todos, &mut todo_curr),
+                (Status::Done, 'K') => action.drag(Direction::Up, &mut dones, &mut done_curr),
                 (Status::Todo, '\n') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
                 (Status::Done, '\n') => action.transfer(&mut todos, &mut dones, &mut done_curr),
                 (Status::Done, 'd') => action.delete(&mut dones, &mut done_curr),

@@ -16,10 +16,12 @@ $ cargo run
 |---|----|
 |<kbd>q</kbd>| Quits application|
 |<kbd>j</kbd>| Goes one item down in active list|
+|<kbd>J</kbd>| Drag item down in active list|
 |<kbd>g</kbd>| Goes first item in active list|
 |<kbd>d</kbd>| Deletes item in DONE list |
 |<kbd>G</kbd>| Goes last item in active list|
 |<kbd>k</kbd>| Goes one item up in active list|
+|<kbd>K</kbd>| Drag item up in active list|
 |<kbd>ENTER</kbd>| Performs transfer from active to other list|
 
 ## References
