@@ -31,4 +31,10 @@ $ cargo run
 
 
 ## References
-- TBD
+
+- ImGUI: https://github.com/ocornut/imgui
+- [Tsoding](https://github.com/tsoding) Stream's:
+   * [Terminal To-Do App in Rust](https://www.youtube.com/watch?v=tR6p7ZC7RaU)
+   * [Two Panel Interface in Rust](https://www.youtube.com/watch?v=Iveh2W3roJk)
+   * [My Rust Skill Are Growing Stronger](https://www.youtube.com/watch?v=Uj0CrPM65Rc)
+- Casey Muratori's Talk on Immediate-Mode GUI: https://www.youtube.com/watch?v=Z1qyvQsjK5Y
