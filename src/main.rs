@@ -1,5 +1,9 @@
 use ncurses::*;
 
+mod action;
+
+use action::*;
+
 const REGULAR_PAIR: i16 = 0;
 const HIGHLIGHT_PAIR: i16 = 1;
 
@@ -15,85 +19,6 @@ impl Status {
         match self {
             Status::Todo => Status::Done,
             Status::Done => Status::Todo,
-        }
-    }
-}
-
-#[derive(PartialEq)]
-#[repr(u8)]
-enum Direction {
-    Up,
-    Down,
-    First,
-    Last,
-}
-
-#[derive(Default)]
-struct Action {}
-
-impl Action {
-    fn go(&self, dir: Direction, size: usize, index: &mut usize) {
-        match dir {
-            Direction::Down => {
-                if size > 0 {
-                    *index = (*index + 1) % size;
-                }
-            }
-            Direction::Last => {
-                if *index + 1 < size {
-                    *index = size - 1;
-                }
-            }
-            Direction::Up => {
-                if size > 0 {
-                    if *index > 0 {
-                        *index = (*index - 1) % size;
-                    } else {
-                        *index = size - 1;
-                    }
-                }
-            }
-            Direction::First => {
-                if *index > 0 {
-                    *index = 0;
-                }
-            }
-        }
-    }
-
-    fn delete(&self, src: &mut Vec<String>, curr: &mut usize) {
-        if *curr < src.len() {
-            src.remove(*curr);
-            if *curr >= src.len() {
-                self.go(Direction::Up, src.len(), curr);
-            }
-        }
-    }
-
-    fn drag(&self, dir: Direction, src: &mut [String], curr: &mut usize) {
-        match dir {
-            Direction::Down => {
-                if *curr + 1 < src.len() {
-                    src.swap(*curr, *curr + 1);
-                    *curr += 1;
-                }
-            }
-            Direction::Up => {
-                if *curr > 0 {
-                    src.swap(*curr, *curr - 1);
-                    *curr -= 1;
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn transfer(&self, dst: &mut Vec<String>, src: &mut Vec<String>, curr: &mut usize) {
-        if !src.is_empty() && *curr < src.len() {
-            dst.push(src.remove(*curr));
-            if *curr >= src.len() {
-                self.go(Direction::Up, src.len(), curr);
-            }
         }
     }
 }
@@ -170,7 +95,6 @@ impl Ui {
 
 fn main() {
     let mut ui = Ui::new();
-    let action = Action::default();
     let mut status = Status::Todo;
 
     let mut todo_curr: usize = 0;
@@ -209,21 +133,21 @@ fn main() {
             match (status, key) {
                 (_, 'q') => ui.do_quit(),
                 (_, '\t') => status = status.toggle(),
-                (Status::Todo, 'j') => action.go(Direction::Down, todos.len(), &mut todo_curr),
-                (Status::Done, 'j') => action.go(Direction::Down, dones.len(), &mut done_curr),
-                (Status::Todo, 'J') => action.drag(Direction::Down, &mut todos, &mut todo_curr),
-                (Status::Done, 'J') => action.drag(Direction::Down, &mut dones, &mut done_curr),
-                (Status::Todo, 'g') => action.go(Direction::First, todos.len(), &mut todo_curr),
-                (Status::Done, 'g') => action.go(Direction::First, dones.len(), &mut done_curr),
-                (Status::Todo, 'G') => action.go(Direction::Last, todos.len(), &mut todo_curr),
-                (Status::Done, 'G') => action.go(Direction::Last, dones.len(), &mut done_curr),
-                (Status::Todo, 'k') => action.go(Direction::Up, todos.len(), &mut todo_curr),
-                (Status::Done, 'k') => action.go(Direction::Up, dones.len(), &mut done_curr),
-                (Status::Todo, 'K') => action.drag(Direction::Up, &mut todos, &mut todo_curr),
-                (Status::Done, 'K') => action.drag(Direction::Up, &mut dones, &mut done_curr),
-                (Status::Todo, '\n') => action.transfer(&mut dones, &mut todos, &mut todo_curr),
-                (Status::Done, '\n') => action.transfer(&mut todos, &mut dones, &mut done_curr),
-                (Status::Done, 'd') => action.delete(&mut dones, &mut done_curr),
+                (Status::Todo, 'j') => go(Direction::Down, todos.len(), &mut todo_curr),
+                (Status::Done, 'j') => go(Direction::Down, dones.len(), &mut done_curr),
+                (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
+                (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
+                (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
+                (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
+                (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
+                (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
+                (Status::Todo, 'k') => go(Direction::Up, todos.len(), &mut todo_curr),
+                (Status::Done, 'k') => go(Direction::Up, dones.len(), &mut done_curr),
+                (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
+                (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
+                (Status::Todo, '\n') => transfer(&mut dones, &mut todos, &mut todo_curr),
+                (Status::Done, '\n') => transfer(&mut todos, &mut dones, &mut done_curr),
+                (Status::Done, 'd') => delete(&mut dones, &mut done_curr),
                 (_, _) => {}
             }
         }
