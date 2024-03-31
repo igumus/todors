@@ -1,26 +1,12 @@
 use ncurses::*;
 
 mod action;
+mod status;
 mod style;
 
 use action::*;
+use status::*;
 use style::*;
-
-#[derive(PartialEq, Clone, Copy)]
-#[repr(u8)]
-enum Status {
-    Todo,
-    Done,
-}
-
-impl Status {
-    fn toggle(&self) -> Self {
-        match self {
-            Status::Todo => Status::Done,
-            Status::Done => Status::Todo,
-        }
-    }
-}
 
 struct Ui {
     quit: bool,
