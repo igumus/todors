@@ -1,29 +1,28 @@
 use ncurses::*;
 
 mod action;
+mod layout;
 mod status;
 mod style;
+mod vec2;
 
 use action::*;
+use layout::*;
 use status::*;
-use style::*;
+use vec2::*;
 
 struct Ui {
     quit: bool,
-    x: i32,
-    y: i32,
-    active_list: Option<u8>,
+    layouts: Vec<Layout>,
 }
 
 impl Ui {
     fn new() -> Self {
         initscr();
-        init_style();
+        style::init_style();
         Ui {
             quit: false,
-            x: 0,
-            y: 0,
-            active_list: None,
+            layouts: Vec::new(),
         }
     }
 
@@ -36,42 +35,48 @@ impl Ui {
     }
 
     fn label(&mut self, text: &str, pair: i16) {
-        mv(self.y, self.x);
+        let layout = self
+            .layouts
+            .last_mut()
+            .expect("Trying to render labele outsize of any layout");
+        let new_pos = layout.available_pos();
+        mv(new_pos.y, new_pos.x);
         attron(COLOR_PAIR(pair));
         addstr(text).unwrap();
         attroff(COLOR_PAIR(pair));
-        self.y += 1;
+        layout.add_widget(Vec2::new(text.len() as i32, 1));
     }
 
-    fn list_element(&mut self, text: &str, curr: &usize, index: &usize) {
-        let pair = if *curr == *index {
-            HIGHLIGHT_PAIR
-        } else {
-            REGULAR_PAIR
-        };
-        self.label(text, pair);
-    }
-
-    fn begin(&mut self) {
+    fn begin(&mut self, kind: layout::LayoutKind) {
+        assert!(self.layouts.is_empty());
         erase();
-        self.x = 0;
-        self.y = 0;
+        self.layouts.push(Layout::new(kind, Vec2::zero()));
     }
 
-    fn begin_list(&mut self, id: u8) {
-        assert!(
-            self.active_list.is_none(),
-            "List#{} is already active. Nested lists are not allowed",
-            self.active_list.unwrap()
-        );
-        self.active_list = Some(id);
+    fn end(&mut self) {
+        self.layouts
+            .pop()
+            .expect("Unbalanced Ui::begin_layout and Ui::end_layout calls");
     }
 
-    fn end_list(&mut self) {
-        self.active_list = None;
+    fn begin_layout(&mut self, kind: layout::LayoutKind) {
+        let layout = self
+            .layouts
+            .last()
+            .expect("Can't create a layout outsize of Ui::begin and Ui::end");
+        self.layouts.push(Layout::new(kind, layout.available_pos()));
     }
 
-    fn end(&self) {}
+    fn end_layout(&mut self) {
+        let layout = self
+            .layouts
+            .pop()
+            .expect("Unbalanced Ui::begin_layout and Ui::end_layout calls");
+        self.layouts
+            .last_mut()
+            .expect("Unbalanced Ui::begin_layout and Ui::end_layout calls")
+            .add_widget(layout.size);
+    }
 }
 
 fn main() {
@@ -88,26 +93,53 @@ fn main() {
     let mut dones = vec!["Start the stream".to_string()];
 
     while !ui.should_quit() {
-        ui.begin();
+        ui.begin(LayoutKind::Horz);
         {
-            ui.begin_list(status as u8);
+            ui.begin_layout(LayoutKind::Vert);
             {
-                match status {
-                    Status::Todo => {
-                        ui.label("[TODO] DONE", REGULAR_PAIR);
-                        for (index, todo) in todos.iter().enumerate() {
-                            ui.list_element(&format!(" - [ ] {}", todo), &todo_curr, &index);
-                        }
-                    }
-                    Status::Done => {
-                        ui.label("TODO [DONE]", REGULAR_PAIR);
-                        for (index, done) in dones.iter().enumerate() {
-                            ui.list_element(&format!(" - [x] {}", done), &done_curr, &index);
-                        }
-                    }
+                ui.label(
+                    "TODO",
+                    if status == Status::Todo {
+                        style::HIGHLIGHT_PAIR
+                    } else {
+                        style::REGULAR_PAIR
+                    },
+                );
+
+                for (index, todo) in todos.iter().enumerate() {
+                    ui.label(
+                        &format!(" - [ ] {}", todo),
+                        if todo_curr == index && status == Status::Todo {
+                            style::HIGHLIGHT_PAIR
+                        } else {
+                            style::REGULAR_PAIR
+                        },
+                    );
                 }
             }
-            ui.end_list();
+            ui.end_layout();
+            ui.begin_layout(LayoutKind::Vert);
+            {
+                ui.label(
+                    "DONE",
+                    if status == Status::Done {
+                        style::HIGHLIGHT_PAIR
+                    } else {
+                        style::REGULAR_PAIR
+                    },
+                );
+                for (index, done) in dones.iter().enumerate() {
+                    ui.label(
+                        &format!(" - [ ] {}", done),
+                        if done_curr == index && status == Status::Done {
+                            style::HIGHLIGHT_PAIR
+                        } else {
+                            style::REGULAR_PAIR
+                        },
+                    );
+                }
+            }
+            ui.end_layout();
 
             refresh();
             let key = getch() as u8 as char;
