@@ -1,4 +1,5 @@
 use ncurses::*;
+use std::collections::HashSet;
 
 mod ui;
 
@@ -7,6 +8,21 @@ use ui::layout::*;
 use ui::status::*;
 use ui::style;
 use ui::vec2::*;
+
+#[derive(PartialEq)]
+enum Mode {
+    Normal,
+    Visual,
+}
+
+impl ToString for Mode {
+    fn to_string(&self) -> String {
+        match self {
+            Mode::Normal => "NORMAL".to_owned(),
+            Mode::Visual => "VISUAL".to_owned(),
+        }
+    }
+}
 
 struct Ui {
     quit: bool,
@@ -78,13 +94,16 @@ impl Ui {
 
 fn main() {
     let mut ui = Ui::new();
-    let mut status = Status::Todo;
     let mut w = 0;
     let mut h = 0;
     let mut notification: String = String::from("");
 
+    let mut status = Status::Todo;
+    let mut mode = Mode::Normal;
     let mut todo_curr: usize = 0;
     let mut done_curr: usize = 0;
+    let mut v_todos: HashSet<usize> = HashSet::new();
+    let mut v_dones: HashSet<usize> = HashSet::new();
     let mut todos = vec![
         "Make todo app".to_string(),
         "Make a cup of tea".to_string(),
@@ -97,7 +116,6 @@ fn main() {
 
         ui.begin(LayoutKind::Vert);
         {
-            ui.label_with_fix_width(&notification, style::REGULAR_PAIR, w);
             ui.begin_layout(LayoutKind::Horz);
             {
                 ui.begin_layout(LayoutKind::Vert);
@@ -114,7 +132,12 @@ fn main() {
                 for (index, todo) in todos.iter().enumerate() {
                     ui.label_with_fix_width(
                         &format!(" - [ ] {}", todo),
-                        if todo_curr == index && status == Status::Todo {
+                        if mode == Mode::Normal && todo_curr == index && status == Status::Todo {
+                            style::HIGHLIGHT_PAIR
+                        } else if mode == Mode::Visual
+                            && v_todos.contains(&index)
+                            && status == Status::Todo
+                        {
                             style::HIGHLIGHT_PAIR
                         } else {
                             style::REGULAR_PAIR
@@ -137,7 +160,12 @@ fn main() {
                 for (index, done) in dones.iter().enumerate() {
                     ui.label_with_fix_width(
                         &format!(" - [x] {}", done),
-                        if done_curr == index && status == Status::Done {
+                        if mode == Mode::Normal && done_curr == index && status == Status::Done {
+                            style::HIGHLIGHT_PAIR
+                        } else if mode == Mode::Visual
+                            && v_dones.contains(&index)
+                            && status == Status::Done
+                        {
                             style::HIGHLIGHT_PAIR
                         } else {
                             style::REGULAR_PAIR
@@ -148,32 +176,109 @@ fn main() {
                 ui.end_layout();
             }
             ui.end_layout();
+            ui.begin_layout(LayoutKind::Horz);
+            ui.label_with_fix_width(&mode.to_string(), style::REGULAR_PAIR, w / 10);
+            ui.label_with_fix_width(
+                &format!("{} ", notification),
+                style::REGULAR_PAIR,
+                w * 9 / 10,
+            );
+            ui.end_layout();
 
             refresh();
             let key = getch() as u8 as char;
             notification.clear();
-            match (status, key) {
-                (_, 'q') => ui.do_quit(),
-                (_, '\t') => status = status.toggle(),
-                (Status::Todo, 'j') => go(Direction::Down, todos.len(), &mut todo_curr),
-                (Status::Done, 'j') => go(Direction::Down, dones.len(), &mut done_curr),
-                (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
-                (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
-                (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
-                (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
-                (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
-                (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
-                (Status::Todo, 'k') => go(Direction::Up, todos.len(), &mut todo_curr),
-                (Status::Done, 'k') => go(Direction::Up, dones.len(), &mut done_curr),
-                (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
-                (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
-                (Status::Todo, '\n') => transfer(&mut dones, &mut todos, &mut todo_curr),
-                (Status::Done, '\n') => transfer(&mut todos, &mut dones, &mut done_curr),
-                (Status::Done, 'd') => {
-                    delete(&mut dones, &mut done_curr);
-                    notification.push_str("Item moved to TODO");
-                }
-                (_, _) => {}
+            match mode {
+                Mode::Normal => match (status, key) {
+                    (_, 'q') => ui.do_quit(),
+                    (_, '\t') => status = status.toggle(),
+                    (_, 'v') => mode = Mode::Visual,
+                    (Status::Todo, 'j') => go(Direction::Down, todos.len(), &mut todo_curr),
+                    (Status::Done, 'j') => go(Direction::Down, dones.len(), &mut done_curr),
+                    (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
+                    (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
+                    (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
+                    (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
+                    (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
+                    (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
+                    (Status::Todo, 'k') => go(Direction::Up, todos.len(), &mut todo_curr),
+                    (Status::Done, 'k') => go(Direction::Up, dones.len(), &mut done_curr),
+                    (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
+                    (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
+                    (Status::Todo, '\n') => transfer(&mut dones, &mut todos, &mut todo_curr),
+                    (Status::Done, '\n') => transfer(&mut todos, &mut dones, &mut done_curr),
+                    (Status::Done, 'd') => {
+                        delete(&mut dones, &mut done_curr);
+                        notification.push_str("Item moved to TODO");
+                    }
+                    (_, _) => {}
+                },
+                Mode::Visual => match (status, key) {
+                    (_, 'q') => ui.do_quit(),
+                    (_, '\t') => status = status.toggle(),
+                    (_, 'v') => {
+                        mode = Mode::Normal;
+                        v_todos.clear();
+                        v_dones.clear();
+                    }
+                    (Status::Todo, 'j') => {
+                        let index = todo_curr.clone();
+                        if !v_todos.remove(&index) {
+                            v_todos.insert(index);
+                        }
+                        go(Direction::Down, todos.len(), &mut todo_curr);
+                    }
+                    (Status::Done, 'j') => {
+                        let index = done_curr.clone();
+                        if !v_dones.remove(&index) {
+                            v_dones.insert(index);
+                        }
+                        go(Direction::Down, dones.len(), &mut done_curr);
+                    }
+                    (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
+                    (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
+                    (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
+                    (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
+                    (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
+                    (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
+                    (Status::Todo, 'k') => {
+                        let index = todo_curr.clone();
+                        if !v_todos.remove(&index) {
+                            v_todos.insert(index);
+                        }
+                        go(Direction::Up, todos.len(), &mut todo_curr);
+                    }
+                    (Status::Done, 'k') => {
+                        let index = done_curr.clone();
+                        if !v_dones.remove(&index) {
+                            v_dones.insert(index);
+                        }
+                        go(Direction::Up, dones.len(), &mut done_curr);
+                    }
+                    (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
+                    (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
+                    (Status::Todo, '\n') => {
+                        if !v_todos.is_empty() {
+                            for (_, vtodo) in v_todos.iter().enumerate() {
+                                dones.push(todos.remove(*vtodo));
+                            }
+                            v_todos.clear();
+                        }
+                    }
+                    (Status::Done, '\n') => {
+                        if !v_dones.is_empty() {
+                            for (_, vtodo) in v_dones.iter().enumerate() {
+                                todos.push(dones.remove(*vtodo));
+                            }
+                            v_dones.clear();
+                        }
+                    }
+                    (Status::Done, 'd') => {
+                        delete(&mut dones, &mut done_curr);
+                        notification.push_str("Item moved to TODO");
+                    }
+                    (_, _) => {}
+                },
             }
         }
         ui.end();
