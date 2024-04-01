@@ -1,15 +1,12 @@
 use ncurses::*;
 
-mod action;
-mod layout;
-mod status;
-mod style;
-mod vec2;
+mod ui;
 
-use action::*;
-use layout::*;
-use status::*;
-use vec2::*;
+use ui::action::*;
+use ui::layout::*;
+use ui::status::*;
+use ui::style;
+use ui::vec2::*;
 
 struct Ui {
     quit: bool,
@@ -47,7 +44,7 @@ impl Ui {
         layout.add_widget(Vec2::new(text.len() as i32, 1));
     }
 
-    fn begin(&mut self, kind: layout::LayoutKind) {
+    fn begin(&mut self, kind: LayoutKind) {
         assert!(self.layouts.is_empty());
         erase();
         self.layouts.push(Layout::new(kind, Vec2::zero()));
@@ -59,7 +56,7 @@ impl Ui {
             .expect("Unbalanced Ui::begin_layout and Ui::end_layout calls");
     }
 
-    fn begin_layout(&mut self, kind: layout::LayoutKind) {
+    fn begin_layout(&mut self, kind: LayoutKind) {
         let layout = self
             .layouts
             .last()

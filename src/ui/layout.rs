@@ -1,4 +1,4 @@
-use crate::vec2::*;
+use super::vec2::*;
 use std::cmp;
 pub enum LayoutKind {
     Horz,
