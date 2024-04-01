@@ -31,7 +31,7 @@ impl Ui {
         self.quit = !self.quit;
     }
 
-    fn label(&mut self, text: &str, pair: i16) {
+    fn label_with_fix_width(&mut self, text: &str, pair: i16, width: i32) {
         let layout = self
             .layouts
             .last_mut()
@@ -41,7 +41,7 @@ impl Ui {
         attron(COLOR_PAIR(pair));
         addstr(text).unwrap();
         attroff(COLOR_PAIR(pair));
-        layout.add_widget(Vec2::new(text.len() as i32, 1));
+        layout.add_widget(Vec2::new(width, 1));
     }
 
     fn begin(&mut self, kind: LayoutKind) {
@@ -79,6 +79,8 @@ impl Ui {
 fn main() {
     let mut ui = Ui::new();
     let mut status = Status::Todo;
+    let mut w = 0;
+    let mut h = 0;
 
     let mut todo_curr: usize = 0;
     let mut done_curr: usize = 0;
@@ -90,49 +92,55 @@ fn main() {
     let mut dones = vec!["Start the stream".to_string()];
 
     while !ui.should_quit() {
+        getmaxyx(stdscr(), &mut h, &mut w);
+
         ui.begin(LayoutKind::Horz);
         {
             ui.begin_layout(LayoutKind::Vert);
             {
-                ui.label(
+                ui.label_with_fix_width(
                     "TODO",
                     if status == Status::Todo {
                         style::HIGHLIGHT_PAIR
                     } else {
                         style::REGULAR_PAIR
                     },
+                    w / 2,
                 );
 
                 for (index, todo) in todos.iter().enumerate() {
-                    ui.label(
+                    ui.label_with_fix_width(
                         &format!(" - [ ] {}", todo),
                         if todo_curr == index && status == Status::Todo {
                             style::HIGHLIGHT_PAIR
                         } else {
                             style::REGULAR_PAIR
                         },
+                        w / 2,
                     );
                 }
             }
             ui.end_layout();
             ui.begin_layout(LayoutKind::Vert);
             {
-                ui.label(
+                ui.label_with_fix_width(
                     "DONE",
                     if status == Status::Done {
                         style::HIGHLIGHT_PAIR
                     } else {
                         style::REGULAR_PAIR
                     },
+                    w / 2,
                 );
                 for (index, done) in dones.iter().enumerate() {
-                    ui.label(
+                    ui.label_with_fix_width(
                         &format!(" - [x] {}", done),
                         if done_curr == index && status == Status::Done {
                             style::HIGHLIGHT_PAIR
                         } else {
                             style::REGULAR_PAIR
                         },
+                        w / 2,
                     );
                 }
             }
