@@ -102,8 +102,8 @@ fn main() {
     let mut mode = Mode::Normal;
     let mut todo_curr: usize = 0;
     let mut done_curr: usize = 0;
-    let mut v_todos: HashSet<usize> = HashSet::new();
-    let mut v_dones: HashSet<usize> = HashSet::new();
+    let mut v_todos: HashSet<String> = HashSet::new();
+    let mut v_dones: HashSet<String> = HashSet::new();
     let mut todos = vec![
         "Make todo app".to_string(),
         "Make a cup of tea".to_string(),
@@ -135,7 +135,7 @@ fn main() {
                         if mode == Mode::Normal && todo_curr == index && status == Status::Todo {
                             style::HIGHLIGHT_PAIR
                         } else if mode == Mode::Visual
-                            && v_todos.contains(&index)
+                            && v_todos.contains(todo)
                             && status == Status::Todo
                         {
                             style::HIGHLIGHT_PAIR
@@ -163,7 +163,7 @@ fn main() {
                         if mode == Mode::Normal && done_curr == index && status == Status::Done {
                             style::HIGHLIGHT_PAIR
                         } else if mode == Mode::Visual
-                            && v_dones.contains(&index)
+                            && v_dones.contains(done)
                             && status == Status::Done
                         {
                             style::HIGHLIGHT_PAIR
@@ -215,67 +215,70 @@ fn main() {
                 },
                 Mode::Visual => match (status, key) {
                     (_, 'q') => ui.do_quit(),
-                    (_, '\t') => status = status.toggle(),
+                    (_, '\t') => {
+                        status = status.toggle();
+                        mode = Mode::Normal;
+                    }
                     (_, 'v') => {
                         mode = Mode::Normal;
                         v_todos.clear();
                         v_dones.clear();
                     }
                     (Status::Todo, 'j') => {
-                        let index = todo_curr.clone();
-                        if !v_todos.remove(&index) {
-                            v_todos.insert(index);
+                        if let Some(item) = todos.get(todo_curr) {
+                            if !v_todos.remove(item) {
+                                v_todos.insert(item.clone());
+                            }
+                            go(Direction::Down, todos.len(), &mut todo_curr);
                         }
-                        go(Direction::Down, todos.len(), &mut todo_curr);
                     }
                     (Status::Done, 'j') => {
-                        let index = done_curr.clone();
-                        if !v_dones.remove(&index) {
-                            v_dones.insert(index);
+                        if let Some(item) = dones.get(done_curr) {
+                            if !v_dones.remove(item) {
+                                v_dones.insert(item.clone());
+                            }
+                            go(Direction::Down, dones.len(), &mut done_curr);
                         }
-                        go(Direction::Down, dones.len(), &mut done_curr);
                     }
-                    (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
-                    (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
-                    (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
-                    (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
-                    (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
-                    (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
                     (Status::Todo, 'k') => {
-                        let index = todo_curr.clone();
-                        if !v_todos.remove(&index) {
-                            v_todos.insert(index);
+                        if let Some(item) = todos.get(todo_curr) {
+                            if !v_todos.remove(item) {
+                                v_todos.insert(item.clone());
+                            }
+                            go(Direction::Up, todos.len(), &mut todo_curr);
                         }
-                        go(Direction::Up, todos.len(), &mut todo_curr);
                     }
                     (Status::Done, 'k') => {
-                        let index = done_curr.clone();
-                        if !v_dones.remove(&index) {
-                            v_dones.insert(index);
+                        if let Some(item) = dones.get(done_curr) {
+                            if !v_dones.remove(item) {
+                                v_dones.insert(item.clone());
+                            }
+                            go(Direction::Up, dones.len(), &mut done_curr);
                         }
-                        go(Direction::Up, dones.len(), &mut done_curr);
                     }
-                    (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
-                    (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
                     (Status::Todo, '\n') => {
                         if !v_todos.is_empty() {
-                            for (_, vtodo) in v_todos.iter().enumerate() {
-                                dones.push(todos.remove(*vtodo));
+                            todos = todos.into_iter().filter(|t| !v_todos.contains(t)).collect();
+                            for t in v_todos.iter() {
+                                dones.push(t.to_string());
                             }
                             v_todos.clear();
                         }
                     }
                     (Status::Done, '\n') => {
                         if !v_dones.is_empty() {
-                            for (_, vtodo) in v_dones.iter().enumerate() {
-                                todos.push(dones.remove(*vtodo));
+                            dones = dones.into_iter().filter(|t| !v_dones.contains(t)).collect();
+                            for t in v_dones.iter() {
+                                todos.push(t.to_string());
                             }
                             v_dones.clear();
                         }
                     }
                     (Status::Done, 'd') => {
-                        delete(&mut dones, &mut done_curr);
-                        notification.push_str("Item moved to TODO");
+                        if !v_dones.is_empty() {
+                            dones = dones.into_iter().filter(|t| !v_dones.contains(t)).collect();
+                            v_dones.clear();
+                        }
                     }
                     (_, _) => {}
                 },
