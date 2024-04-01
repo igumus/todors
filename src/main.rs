@@ -81,6 +81,7 @@ fn main() {
     let mut status = Status::Todo;
     let mut w = 0;
     let mut h = 0;
+    let mut notification: String = String::from("");
 
     let mut todo_curr: usize = 0;
     let mut done_curr: usize = 0;
@@ -94,10 +95,12 @@ fn main() {
     while !ui.should_quit() {
         getmaxyx(stdscr(), &mut h, &mut w);
 
-        ui.begin(LayoutKind::Horz);
+        ui.begin(LayoutKind::Vert);
         {
-            ui.begin_layout(LayoutKind::Vert);
+            ui.label_with_fix_width(&notification, style::REGULAR_PAIR, w);
+            ui.begin_layout(LayoutKind::Horz);
             {
+                ui.begin_layout(LayoutKind::Vert);
                 ui.label_with_fix_width(
                     "TODO",
                     if status == Status::Todo {
@@ -119,10 +122,9 @@ fn main() {
                         w / 2,
                     );
                 }
-            }
-            ui.end_layout();
-            ui.begin_layout(LayoutKind::Vert);
-            {
+                ui.end_layout();
+
+                ui.begin_layout(LayoutKind::Vert);
                 ui.label_with_fix_width(
                     "DONE",
                     if status == Status::Done {
@@ -143,11 +145,13 @@ fn main() {
                         w / 2,
                     );
                 }
+                ui.end_layout();
             }
             ui.end_layout();
 
             refresh();
             let key = getch() as u8 as char;
+            notification.clear();
             match (status, key) {
                 (_, 'q') => ui.do_quit(),
                 (_, '\t') => status = status.toggle(),
@@ -165,7 +169,10 @@ fn main() {
                 (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
                 (Status::Todo, '\n') => transfer(&mut dones, &mut todos, &mut todo_curr),
                 (Status::Done, '\n') => transfer(&mut todos, &mut dones, &mut done_curr),
-                (Status::Done, 'd') => delete(&mut dones, &mut done_curr),
+                (Status::Done, 'd') => {
+                    delete(&mut dones, &mut done_curr);
+                    notification.push_str("Item moved to TODO");
+                }
                 (_, _) => {}
             }
         }
