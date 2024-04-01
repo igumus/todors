@@ -130,7 +130,7 @@ fn main() {
                 );
                 for (index, done) in dones.iter().enumerate() {
                     ui.label(
-                        &format!(" - [ ] {}", done),
+                        &format!(" - [x] {}", done),
                         if done_curr == index && status == Status::Done {
                             style::HIGHLIGHT_PAIR
                         } else {
