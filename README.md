@@ -10,6 +10,14 @@ Note that you must to have the ncurses library installed and linkable. On Linux,
 $ cargo run
 ```
 
+## Modes
+
+|Mode|Description|
+|---|----|
+|Normal| Normal Mode |
+|Visual| Visual Mode | 
+|Insert| Insert Mode | 
+
 ## Controls
 
 |Key|Description|
