@@ -2,6 +2,7 @@
 pub enum Mode {
     Normal,
     Visual,
+    Insert,
 }
 
 impl ToString for Mode {
@@ -9,6 +10,7 @@ impl ToString for Mode {
         match self {
             Mode::Normal => "NORMAL".to_owned(),
             Mode::Visual => "VISUAL".to_owned(),
+            Mode::Insert => "INSERT".to_owned(),
         }
     }
 }

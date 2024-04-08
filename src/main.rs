@@ -180,6 +180,15 @@ fn main() {
                     (_, KEYMAP_QUIT) => ui.do_quit(),
                     (_, KEYMAP_TAB) => status = status.toggle(),
                     (_, KEYMAP_V) => mode = Mode::Visual,
+                    (Status::Todo, KEYMAP_O) => {
+                        mode = Mode::Insert;
+                        todo_curr += 1;
+                        todos.insert(todo_curr, String::new());
+                    }
+                    (Status::Todo, KEYMAP_SHIFT_O) => {
+                        mode = Mode::Insert;
+                        todos.insert(todo_curr, String::new());
+                    }
                     (Status::Todo, KEYMAP_J) => go(Direction::Down, todos.len(), &mut todo_curr),
                     (Status::Done, KEYMAP_J) => go(Direction::Down, dones.len(), &mut done_curr),
                     (Status::Todo, KEYMAP_SHIFT_J) => {
@@ -281,6 +290,20 @@ fn main() {
                         if !v_dones.is_empty() {
                             dones = dones.into_iter().filter(|t| !v_dones.contains(t)).collect();
                             v_dones.clear();
+                        }
+                    }
+                    (_, _) => {}
+                },
+                Mode::Insert => match (status, key) {
+                    (_, KEYMAP_ESC) => mode = Mode::Normal,
+                    (Status::Todo, KEYMAP_NEWLINE) => mode = Mode::Normal,
+                    (Status::Todo, key) => {
+                        let item = todos.get_mut(todo_curr).unwrap();
+                        match key as u8 {
+                            32..=126 => {
+                                item.push(key);
+                            }
+                            _ => {}
                         }
                     }
                     (_, _) => {}

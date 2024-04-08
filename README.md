@@ -14,23 +14,26 @@ $ cargo run
 
 |Mode|Description|
 |---|----|
-|Normal| Normal Mode |
-|Visual| Visual Mode | 
-|Insert| Insert Mode | 
+| Normal | Normal Mode |
+| Visual | Visual Mode | 
+| Insert | Insert Mode | 
 
 ## Controls
 
-|Key|Description|
-|---|----|
-|<kbd>q</kbd>| Quits application|
-|<kbd>j</kbd>| Goes one item down in active list|
-|<kbd>k</kbd>| Goes one item up in active list|
-|<kbd>g</kbd>| Goes first item in active list|
-|<kbd>d</kbd>| Deletes item in DONE list |
-|<kbd>ENTER</kbd>| Performs transfer from active to other list|
-|<kbd>J</kbd>| Drag item down in active list|
-|<kbd>G</kbd>| Goes last item in active list|
-|<kbd>K</kbd>| Drag item up in active list|
+|Mode|Key|Description|
+|----|----|----|
+| Visual, Normal | <kbd>q</kbd> | Quits application |
+| Visual, Normal | <kbd>j</kbd> | Goes one item down in active list | 
+| Visual, Normal | <kbd>k</kbd> | Goes one item up in active list | 
+| Normal | <kbd>g</kbd> | Goes first item in active list | 
+| Visual, Normal | <kbd>d</kbd> | Deletes item in DONE list | 
+| Visual, Normal | <kbd>ENTER</kbd> | Performs transfer from active to other list | 
+| Normal | <kbd>J</kbd> | Drag item down in active list | 
+| Normal | <kbd>G</kbd> | Goes last item in active list | 
+| Normal | <kbd>K</kbd> | Drag item up in active list | 
+| Normal | <kbd>o</kbd> | Adds new item on after current line in TODO panel |
+| Normal | <kbd>O</kbd> | Adds new item on before current line in TODO panel |
+| Insert | <kbd>ENTER</kbd> | Updated TODOS panel, goes into Normal mode | 
 
 ## Purposes
 
