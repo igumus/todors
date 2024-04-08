@@ -4,6 +4,7 @@ use std::collections::HashSet;
 mod ui;
 
 use ui::action::*;
+use ui::key_map::*;
 use ui::layout::*;
 use ui::status::*;
 use ui::style;
@@ -190,41 +191,57 @@ fn main() {
             notification.clear();
             match mode {
                 Mode::Normal => match (status, key) {
-                    (_, 'q') => ui.do_quit(),
-                    (_, '\t') => status = status.toggle(),
-                    (_, 'v') => mode = Mode::Visual,
-                    (Status::Todo, 'j') => go(Direction::Down, todos.len(), &mut todo_curr),
-                    (Status::Done, 'j') => go(Direction::Down, dones.len(), &mut done_curr),
-                    (Status::Todo, 'J') => drag(Direction::Down, &mut todos, &mut todo_curr),
-                    (Status::Done, 'J') => drag(Direction::Down, &mut dones, &mut done_curr),
-                    (Status::Todo, 'g') => go(Direction::First, todos.len(), &mut todo_curr),
-                    (Status::Done, 'g') => go(Direction::First, dones.len(), &mut done_curr),
-                    (Status::Todo, 'G') => go(Direction::Last, todos.len(), &mut todo_curr),
-                    (Status::Done, 'G') => go(Direction::Last, dones.len(), &mut done_curr),
-                    (Status::Todo, 'k') => go(Direction::Up, todos.len(), &mut todo_curr),
-                    (Status::Done, 'k') => go(Direction::Up, dones.len(), &mut done_curr),
-                    (Status::Todo, 'K') => drag(Direction::Up, &mut todos, &mut todo_curr),
-                    (Status::Done, 'K') => drag(Direction::Up, &mut dones, &mut done_curr),
-                    (Status::Todo, '\n') => transfer(&mut dones, &mut todos, &mut todo_curr),
-                    (Status::Done, '\n') => transfer(&mut todos, &mut dones, &mut done_curr),
-                    (Status::Done, 'd') => {
+                    (_, KEYMAP_QUIT) => ui.do_quit(),
+                    (_, KEYMAP_TAB) => status = status.toggle(),
+                    (_, KEYMAP_V) => mode = Mode::Visual,
+                    (Status::Todo, KEYMAP_J) => go(Direction::Down, todos.len(), &mut todo_curr),
+                    (Status::Done, KEYMAP_J) => go(Direction::Down, dones.len(), &mut done_curr),
+                    (Status::Todo, KEYMAP_SHIFT_J) => {
+                        drag(Direction::Down, &mut todos, &mut todo_curr)
+                    }
+                    (Status::Done, KEYMAP_SHIFT_J) => {
+                        drag(Direction::Down, &mut dones, &mut done_curr)
+                    }
+                    (Status::Todo, KEYMAP_G) => go(Direction::First, todos.len(), &mut todo_curr),
+                    (Status::Done, KEYMAP_G) => go(Direction::First, dones.len(), &mut done_curr),
+                    (Status::Todo, KEYMAP_SHIFT_G) => {
+                        go(Direction::Last, todos.len(), &mut todo_curr)
+                    }
+                    (Status::Done, KEYMAP_SHIFT_G) => {
+                        go(Direction::Last, dones.len(), &mut done_curr)
+                    }
+                    (Status::Todo, KEYMAP_K) => go(Direction::Up, todos.len(), &mut todo_curr),
+                    (Status::Done, KEYMAP_K) => go(Direction::Up, dones.len(), &mut done_curr),
+                    (Status::Todo, KEYMAP_SHIFT_K) => {
+                        drag(Direction::Up, &mut todos, &mut todo_curr)
+                    }
+                    (Status::Done, KEYMAP_SHIFT_K) => {
+                        drag(Direction::Up, &mut dones, &mut done_curr)
+                    }
+                    (Status::Todo, KEYMAP_NEWLINE) => {
+                        transfer(&mut dones, &mut todos, &mut todo_curr)
+                    }
+                    (Status::Done, KEYMAP_NEWLINE) => {
+                        transfer(&mut todos, &mut dones, &mut done_curr)
+                    }
+                    (Status::Done, KEYMAP_D) => {
                         delete(&mut dones, &mut done_curr);
                         notification.push_str("Item moved to TODO");
                     }
                     (_, _) => {}
                 },
                 Mode::Visual => match (status, key) {
-                    (_, 'q') => ui.do_quit(),
-                    (_, '\t') => {
+                    (_, KEYMAP_QUIT) => ui.do_quit(),
+                    (_, KEYMAP_TAB) => {
                         status = status.toggle();
                         mode = Mode::Normal;
                     }
-                    (_, 'v') => {
+                    (_, KEYMAP_V) => {
                         mode = Mode::Normal;
                         v_todos.clear();
                         v_dones.clear();
                     }
-                    (Status::Todo, 'j') => {
+                    (Status::Todo, KEYMAP_J) => {
                         if let Some(item) = todos.get(todo_curr) {
                             if !v_todos.remove(item) {
                                 v_todos.insert(item.clone());
@@ -232,7 +249,7 @@ fn main() {
                             go(Direction::Down, todos.len(), &mut todo_curr);
                         }
                     }
-                    (Status::Done, 'j') => {
+                    (Status::Done, KEYMAP_J) => {
                         if let Some(item) = dones.get(done_curr) {
                             if !v_dones.remove(item) {
                                 v_dones.insert(item.clone());
@@ -240,7 +257,7 @@ fn main() {
                             go(Direction::Down, dones.len(), &mut done_curr);
                         }
                     }
-                    (Status::Todo, 'k') => {
+                    (Status::Todo, KEYMAP_K) => {
                         if let Some(item) = todos.get(todo_curr) {
                             if !v_todos.remove(item) {
                                 v_todos.insert(item.clone());
@@ -248,7 +265,7 @@ fn main() {
                             go(Direction::Up, todos.len(), &mut todo_curr);
                         }
                     }
-                    (Status::Done, 'k') => {
+                    (Status::Done, KEYMAP_K) => {
                         if let Some(item) = dones.get(done_curr) {
                             if !v_dones.remove(item) {
                                 v_dones.insert(item.clone());
@@ -256,7 +273,7 @@ fn main() {
                             go(Direction::Up, dones.len(), &mut done_curr);
                         }
                     }
-                    (Status::Todo, '\n') => {
+                    (Status::Todo, KEYMAP_NEWLINE) => {
                         if !v_todos.is_empty() {
                             todos = todos.into_iter().filter(|t| !v_todos.contains(t)).collect();
                             for t in v_todos.iter() {
@@ -265,7 +282,7 @@ fn main() {
                             v_todos.clear();
                         }
                     }
-                    (Status::Done, '\n') => {
+                    (Status::Done, KEYMAP_NEWLINE) => {
                         if !v_dones.is_empty() {
                             dones = dones.into_iter().filter(|t| !v_dones.contains(t)).collect();
                             for t in v_dones.iter() {
@@ -274,7 +291,7 @@ fn main() {
                             v_dones.clear();
                         }
                     }
-                    (Status::Done, 'd') => {
+                    (Status::Done, KEYMAP_D) => {
                         if !v_dones.is_empty() {
                             dones = dones.into_iter().filter(|t| !v_dones.contains(t)).collect();
                             v_dones.clear();

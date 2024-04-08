@@ -1,0 +1,11 @@
+pub const KEYMAP_QUIT: char = 'q';
+pub const KEYMAP_TAB: char = '\t';
+pub const KEYMAP_NEWLINE: char = '\n';
+pub const KEYMAP_V: char = 'v';
+pub const KEYMAP_D: char = 'd';
+pub const KEYMAP_J: char = 'j';
+pub const KEYMAP_SHIFT_J: char = 'J';
+pub const KEYMAP_G: char = 'g';
+pub const KEYMAP_SHIFT_G: char = 'G';
+pub const KEYMAP_K: char = 'k';
+pub const KEYMAP_SHIFT_K: char = 'K';
