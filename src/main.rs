@@ -6,24 +6,10 @@ mod ui;
 use ui::action::*;
 use ui::key_map::*;
 use ui::layout::*;
+use ui::mode::*;
 use ui::status::*;
 use ui::style;
 use ui::vec2::*;
-
-#[derive(PartialEq)]
-enum Mode {
-    Normal,
-    Visual,
-}
-
-impl ToString for Mode {
-    fn to_string(&self) -> String {
-        match self {
-            Mode::Normal => "NORMAL".to_owned(),
-            Mode::Visual => "VISUAL".to_owned(),
-        }
-    }
-}
 
 struct Ui {
     quit: bool,
