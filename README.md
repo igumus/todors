@@ -46,6 +46,9 @@ $ cargo run
 - Exercize with Rust 
 - Experiment with Immediate UI (especially TUI) idea.
 
+## TODOs
+- [ ] Add cursor highlight
+- [ ] Add persistence
 
 ## References
 
