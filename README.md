@@ -33,7 +33,13 @@ $ cargo run
 | Normal | <kbd>K</kbd> | Drag item up in active list | 
 | Normal | <kbd>o</kbd> | Adds new item on after current line in TODO panel |
 | Normal | <kbd>O</kbd> | Adds new item on before current line in TODO panel |
-| Insert | <kbd>ENTER</kbd> | Updated TODOS panel, goes into Normal mode | 
+| Normal | <kbd>I</kbd> | Moves cursor to start of line and enters Insert mode | 
+| Normal | <kbd>A</kbd> | Moves cursor to end of line and enters Insert mode | 
+| Insert | <kbd>ENTER</kbd> | Update active panel, goes into Normal mode | 
+| Insert | <kbd>DEL</kbd> | Deletes one char at a time towards to end | 
+| Insert | <kbd>BACKSPACE</kbd> | Deletes one char at a time towards to start | 
+| Insert | <kbd>LEFT</kbd> | Moves cursor to left |  
+| Insert | <kbd>RIGHT</kbd> | Moves cursor to right | 
 
 ## Purposes
 
