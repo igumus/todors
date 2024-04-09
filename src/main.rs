@@ -19,6 +19,7 @@ struct Ui {
 impl Ui {
     fn new() -> Self {
         initscr();
+        keypad(stdscr(), true);
         style::init_style();
         Ui {
             quit: false,
@@ -87,6 +88,7 @@ fn main() {
 
     let mut status = Status::Todo;
     let mut mode = Mode::Normal;
+    let mut cursor = 0;
     let mut todo_curr: usize = 0;
     let mut done_curr: usize = 0;
     let mut v_todos: HashSet<String> = HashSet::new();
@@ -173,21 +175,41 @@ fn main() {
             ui.end_layout();
 
             refresh();
-            let key = getch() as u8 as char;
+            let key = getch() as i32;
             notification.clear();
             match mode {
                 Mode::Normal => match (status, key) {
                     (_, KEYMAP_QUIT) => ui.do_quit(),
                     (_, KEYMAP_TAB) => status = status.toggle(),
                     (_, KEYMAP_V) => mode = Mode::Visual,
+                    (Status::Todo, KEYMAP_SHIFT_A) => {
+                        mode = Mode::Insert;
+                        let item = todos.get_mut(todo_curr).unwrap();
+                        cursor = item.len() - 1;
+                    }
+                    (Status::Done, KEYMAP_SHIFT_A) => {
+                        mode = Mode::Insert;
+                        let item = dones.get_mut(done_curr).unwrap();
+                        cursor = item.len() - 1;
+                    }
+                    (Status::Todo, KEYMAP_SHIFT_I) => {
+                        mode = Mode::Insert;
+                        cursor = 0;
+                    }
+                    (Status::Done, KEYMAP_SHIFT_I) => {
+                        mode = Mode::Insert;
+                        cursor = 0;
+                    }
                     (Status::Todo, KEYMAP_O) => {
                         mode = Mode::Insert;
                         todo_curr += 1;
                         todos.insert(todo_curr, String::new());
+                        cursor = 0;
                     }
                     (Status::Todo, KEYMAP_SHIFT_O) => {
                         mode = Mode::Insert;
                         todos.insert(todo_curr, String::new());
+                        cursor = 0;
                     }
                     (Status::Todo, KEYMAP_J) => go(Direction::Down, todos.len(), &mut todo_curr),
                     (Status::Done, KEYMAP_J) => go(Direction::Down, dones.len(), &mut done_curr),
@@ -296,17 +318,68 @@ fn main() {
                 },
                 Mode::Insert => match (status, key) {
                     (_, KEYMAP_ESC) => mode = Mode::Normal,
-                    (Status::Todo, KEYMAP_NEWLINE) => mode = Mode::Normal,
-                    (Status::Todo, key) => {
-                        let item = todos.get_mut(todo_curr).unwrap();
-                        match key as u8 {
+                    (_, KEYMAP_NEWLINE) => {
+                        mode = Mode::Normal;
+                        cursor = 0;
+                    }
+                    (_, KEYMAP_LEFT) => {
+                        if cursor > 0 {
+                            cursor -= 1;
+                        }
+                    }
+                    (Status::Done, KEYMAP_DELETE) => {
+                        todos.push(format!("key:{}", key));
+                        let item = dones.get_mut(done_curr).unwrap();
+                        if cursor < item.len() {
+                            item.remove(cursor);
+                        }
+                    }
+                    (Status::Done, KEYMAP_BACKSPACE) => {
+                        if cursor > 0 {
+                            let item = dones.get_mut(done_curr).unwrap();
+                            item.remove(cursor);
+                            cursor -= 1;
+                        }
+                    }
+                    (Status::Done, key) => {
+                        let item = dones.get_mut(done_curr).unwrap();
+                        match key {
                             32..=126 => {
-                                item.push(key);
+                                item.insert(cursor, char::from_u32(key as u32).unwrap());
+                                cursor += 1;
                             }
                             _ => {}
                         }
                     }
-                    (_, _) => {}
+                    (Status::Todo, KEYMAP_DELETE) => {
+                        let item = todos.get_mut(todo_curr).unwrap();
+                        if cursor < item.len() {
+                            item.remove(cursor);
+                        }
+                    }
+                    (Status::Todo, KEYMAP_BACKSPACE) => {
+                        if cursor > 0 {
+                            let item = todos.get_mut(todo_curr).unwrap();
+                            item.remove(cursor);
+                            cursor -= 1;
+                        }
+                    }
+                    (Status::Todo, KEYMAP_RIGHT) => {
+                        let item = todos.get_mut(todo_curr).unwrap();
+                        if cursor < item.len() {
+                            cursor += 1;
+                        }
+                    }
+                    (Status::Todo, key) => {
+                        let item = todos.get_mut(todo_curr).unwrap();
+                        match key {
+                            32..=126 => {
+                                item.insert(cursor, char::from_u32(key as u32).unwrap());
+                                cursor += 1;
+                            }
+                            _ => {}
+                        }
+                    }
                 },
             }
         }
